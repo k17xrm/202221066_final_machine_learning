@@ -1,0 +1,15 @@
+artifact_uri: file:c:\Users\jiwoo\OneDrive\Documents\기계학습_기말\202221066_final_machine_learning\202221066_final_machine_learning\mlruns/719046267079531110/f365d0ddad914209834802f6eb7e4d84/artifacts
+end_time: 1781773018452
+entry_point_name: ''
+experiment_id: '719046267079531110'
+lifecycle_stage: active
+run_id: f365d0ddad914209834802f6eb7e4d84
+run_name: svc
+run_uuid: f365d0ddad914209834802f6eb7e4d84
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781773013203
+status: 3
+tags: []
+user_id: jiwoo

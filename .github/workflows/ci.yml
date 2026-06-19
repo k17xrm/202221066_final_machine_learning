@@ -1,15 +1,15 @@
-name: ci
+name: CI
 
 on:
   push:
-    branches:
-      - "**"
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -22,5 +22,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unittest
-        run: python -m unittest discover -s tests
+      - name: Check required artifacts
+        run: |
+          test -f models/final_model.joblib
+          test -f data/sample_input.csv
+
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s tests
