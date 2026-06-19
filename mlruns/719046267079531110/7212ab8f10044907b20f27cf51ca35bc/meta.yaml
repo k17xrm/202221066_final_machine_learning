@@ -1,0 +1,15 @@
+artifact_uri: file:c:\Users\jiwoo\OneDrive\Documents\기계학습_기말\202221066_final_machine_learning\202221066_final_machine_learning\mlruns/719046267079531110/7212ab8f10044907b20f27cf51ca35bc/artifacts
+end_time: 1781858035846
+entry_point_name: ''
+experiment_id: '719046267079531110'
+lifecycle_stage: active
+run_id: 7212ab8f10044907b20f27cf51ca35bc
+run_name: logistic_regression
+run_uuid: 7212ab8f10044907b20f27cf51ca35bc
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1781858026222
+status: 3
+tags: []
+user_id: jiwoo
