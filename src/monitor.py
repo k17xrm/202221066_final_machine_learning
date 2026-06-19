@@ -2,6 +2,7 @@ from pathlib import Path
 import logging
 import argparse
 from datetime import datetime, timedelta
+import matplotlib.dates as mdates
 
 import joblib
 import numpy as np
@@ -41,10 +42,10 @@ CONTINUOUS_FEATURES = [
 # These shifts are intentionally stronger than a tiny perturbation so that
 # the effect can be observed in KS statistics and model performance.
 SHIFT_CONFIG = {
-    "chol": 80.0,
-    "trestbps": 20.0,
-    "thalach": -25.0,
-    "oldpeak": 1.0,
+    "chol": 120.0,
+    "trestbps": 40.0,
+    "thalach": -40.0,
+    "oldpeak": 2.0,
 }
 
 CLINICAL_LIMITS = {
@@ -256,6 +257,9 @@ def create_metric_timeseries(
     rows = []
 
     base_time = datetime.now().replace(microsecond=0)
+
+    # Synthetic drift intensity over time.
+    # This creates a time series where drift gradually increases.
     strengths = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
     for idx, strength in enumerate(strengths):
@@ -274,13 +278,16 @@ def create_metric_timeseries(
 
         rows.append(
             {
-                "timestamp": batch_time.isoformat(),
+                "timestamp": batch_time,
                 "drift_strength": strength,
                 "balanced_accuracy": balanced_accuracy,
             }
         )
 
-    return pd.DataFrame(rows)
+    metric_timeseries = pd.DataFrame(rows)
+    metric_timeseries["timestamp"] = pd.to_datetime(metric_timeseries["timestamp"])
+
+    return metric_timeseries
 
 
 def save_ks_plot(ks_results: pd.DataFrame) -> Path:
@@ -306,22 +313,45 @@ def save_ks_plot(ks_results: pd.DataFrame) -> Path:
 def save_metric_timeseries_plot(metric_timeseries: pd.DataFrame) -> Path:
     output_path = FIGURES_DIR / "drift_balanced_accuracy_timeseries.png"
 
-    plt.figure(figsize=(8, 4))
-    plt.plot(
-        metric_timeseries["timestamp"],
-        metric_timeseries["balanced_accuracy"],
+    plot_df = metric_timeseries.copy()
+    plot_df["timestamp"] = pd.to_datetime(plot_df["timestamp"])
+    plot_df = plot_df.sort_values("timestamp")
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+
+    ax.plot(
+        plot_df["timestamp"],
+        plot_df["balanced_accuracy"],
         marker="o",
     )
-    plt.title("Balanced Accuracy under Synthetic Drift")
-    plt.xlabel("Synthetic Timestamp")
-    plt.ylabel("Balanced Accuracy")
-    plt.xticks(rotation=30)
+
+    ax.set_title("Balanced Accuracy under Synthetic Drift")
+    ax.set_xlabel("Synthetic Time")
+    ax.set_ylabel("Balanced Accuracy")
+
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+
+    for timestamp, score, strength in zip(
+        plot_df["timestamp"],
+        plot_df["balanced_accuracy"],
+        plot_df["drift_strength"],
+    ):
+        ax.annotate(
+            f"{strength:.1f}",
+            xy=(timestamp, score),
+            xytext=(0, 6),
+            textcoords="offset points",
+            ha="center",
+            fontsize=8,
+        )
+
+    fig.autofmt_xdate()
     plt.tight_layout()
     plt.savefig(output_path, dpi=300)
-    plt.close()
+    plt.close(fig)
 
     return output_path
-
 
 def run_monitoring(
     model_path: Path = DEFAULT_MODEL_PATH,
