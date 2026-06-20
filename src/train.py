@@ -106,12 +106,7 @@ from preprocessing import (
 raw_df = load_heart_disease_processed_files(DATA_DIR)
 clean_df = clean_dataframe(raw_df)
 
-numeric_features, categorical_features, drop_features = infer_feature_groups(
-    clean_df,
-    missing_drop_threshold=0.5
-)
-
-X, y = split_features_target(clean_df, drop_features)
+X, y = split_features_target(clean_df, drop_features=[])
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
@@ -120,6 +115,17 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=RANDOM_STATE,
     stratify=y
 )
+
+train_feature_df = X_train.copy()
+train_feature_df[TARGET] = y_train.values
+
+numeric_features, categorical_features, drop_features = infer_feature_groups(
+    train_feature_df,
+    missing_drop_threshold=0.5
+)
+
+X_train = X_train.drop(columns=drop_features, errors="ignore")
+X_test = X_test.drop(columns=drop_features, errors="ignore")
 
 print("사용 수치형 변수:", numeric_features)
 print("사용 범주형 변수:", categorical_features)
