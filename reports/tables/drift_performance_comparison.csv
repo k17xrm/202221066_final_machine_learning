@@ -1,0 +1,3 @@
+dataset,model_version,n_samples,balanced_accuracy,balanced_accuracy_change_vs_original
+original_test,final_model_20260619_221426,184,0.7873027259684362,0.0
+drifted_test,final_model_20260619_221426,184,0.7048063127690101,-0.08249641319942613
