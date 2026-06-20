@@ -1,6 +1,0 @@
-2026-06-19 22:14:45,525 | INFO | model_path=C:\Users\jiwoo\OneDrive\Documents\기계학습_기말\202221066_final_machine_learning\202221066_final_machine_learning\models\final_model.joblib
-2026-06-19 22:14:45,535 | INFO | input_path=C:\Users\jiwoo\OneDrive\Documents\기계학습_기말\202221066_final_machine_learning\202221066_final_machine_learning\data\sample_input.csv
-2026-06-19 22:14:45,535 | INFO | output_path=C:\Users\jiwoo\OneDrive\Documents\기계학습_기말\202221066_final_machine_learning\202221066_final_machine_learning\reports\inference_predictions.csv
-2026-06-19 22:14:45,535 | INFO | input_shape=(5, 11)
-2026-06-19 22:14:45,535 | INFO | predictions=[0, 1, 1, 1, 0]
-2026-06-19 22:14:45,535 | INFO | probabilities=[[0.6718691854772476, 0.3281308145227522], [0.09292561186733757, 0.9070743881326624], [0.2641594955513271, 0.7358405044486731], [0.06829835868395068, 0.9317016413160495], [0.5679161197694332, 0.43208388023056654]]
