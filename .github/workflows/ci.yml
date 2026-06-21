@@ -1,3 +1,5 @@
+# 깃허브 액션에서 저장소 상태를 자동으로 검증하는 최소 워크플로우
+# 의존성 설치 후 필수 아티팩트를 확인하고 테스트를 실행함
 name: CI
 
 on:
@@ -6,27 +8,33 @@ on:
 
 jobs:
   test:
+    # 이 저장소 검증은 일반 Python 실행만 필요함 -> Ubuntu runner면 충분함
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
+        # 현재 저장소 파일을 runner 작업 공간으로 가져옴
         uses: actions/checkout@v4
 
       - name: Set up Python
+        # 실행 환경을 맞추기 위해 Python 버전을 고정함
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
+        # requirements.txt에 적힌 의존성을 설치함
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Check required artifacts
+        # 저장된 모델 파일과 샘플 입력 CSV가 없으면 바로 실패하게 함
         run: |
           test -f models/final_model.joblib
           test -f data/sample_input.csv
 
       - name: Run unit tests
+        # 저장된 추론 파이프라인을 검증하는 단위 테스트를 실행함
         run: |
           python -m unittest discover -s tests
