@@ -17,18 +17,9 @@ from inference import validate_input
 
 
 class TestCardioCarePipeline(unittest.TestCase):
-    """
-    CardioCare 모델 파이프라인의 기본 동작을 검증한다.
-
-    테스트 항목:
-    1. 예측 결과 shape 검증
-    2. 예측 확률 범위 검증
-    3. 임상 입력값 범위 검증
-    4. 동일 입력에 대한 결정론적 예측 검증
-    """
-
     @classmethod
     def setUpClass(cls):
+        # 모든 테스트에서 공통으로 사용할 모델 파일과 샘플 입력을 한 번만 불러옴
         cls.model_path = PROJECT_ROOT / "models" / "final_model.joblib"
         cls.sample_input_path = PROJECT_ROOT / "data" / "sample_input.csv"
 
@@ -46,10 +37,7 @@ class TestCardioCarePipeline(unittest.TestCase):
         cls.sample_input = pd.read_csv(cls.sample_input_path)
 
     def test_prediction_shape(self):
-        """
-        입력 행 수와 예측 결과 행 수가 일치하는지 검증한다.
-        """
-
+        # 입력 행 수와 예측 결과 행 수가 정확히 일치하는지 확인함
         predictions = self.model.predict(self.sample_input)
 
         self.assertEqual(
@@ -58,11 +46,7 @@ class TestCardioCarePipeline(unittest.TestCase):
         )
 
     def test_prediction_probability_range(self):
-        """
-        predict_proba 출력값이 0 이상 1 이하인지,
-        각 행의 확률 합이 1인지 검증한다.
-        """
-
+        # 확률 예측값이 0 이상 1 이하이고 각 행의 합이 1인지 확인함
         probabilities = self.model.predict_proba(self.sample_input)
 
         self.assertTrue(
@@ -83,11 +67,7 @@ class TestCardioCarePipeline(unittest.TestCase):
         )
 
     def test_clinical_value_range(self):
-        """
-        임상적으로 허용 가능한 입력은 통과하고,
-        허용 범위를 벗어난 입력은 ValueError를 발생시키는지 검증한다.
-        """
-
+        # 정상 입력은 통과하고 비정상 임상값은 예외가 발생하는지 확인함
         valid_input = self.sample_input.copy()
 
         try:
@@ -104,10 +84,7 @@ class TestCardioCarePipeline(unittest.TestCase):
             validate_input(invalid_input)
 
     def test_deterministic_prediction(self):
-        """
-        동일한 입력에 대해 동일한 예측 결과가 반복되는지 검증한다.
-        """
-
+        # 같은 입력에 대해 예측 결과가 항상 동일한지 확인함
         first_prediction = self.model.predict(self.sample_input)
         second_prediction = self.model.predict(self.sample_input)
 
