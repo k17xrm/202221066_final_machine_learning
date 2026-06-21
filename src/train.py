@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 RANDOM_STATE = 42
 TEST_SIZE = 0.2
 
+# 프로젝트 루트와 `src/` 내부 어디서 실행해도 `data/` 폴더를 찾도록 후보 경로를 확인함
 candidate_roots = [
     Path.cwd(),
     Path.cwd().parent,
@@ -43,9 +44,6 @@ print("PROJECT_ROOT:", PROJECT_ROOT)
 print("DATA_DIR:", DATA_DIR)
 print("SRC_DIR:", SRC_DIR)
 
-# ## 32. 모델 학습용 라이브러리 불러오기 및 MLflow와 저장 폴더 설정하기
-
-# 모델 학습, 실험 추적, 모델 저장에 필요한 라이브러리를 불러옵니다.
 import json
 import joblib
 
@@ -90,9 +88,8 @@ mlflow.set_experiment("CardioCare_Heart_Disease_Prediction")
 print("MLflow tracking URI:", mlflow.get_tracking_uri())
 print("Models dir:", MODELS_DIR)
 
-# ## 33. 학습 데이터 다시 준비하기
-# 앞에서 만든 src/preprocessing.py를 사용해 데이터를 다시 불러오기
-
+# 학습 데이터 다시 준비하기 -> 앞에서 만든 src/preprocessing.py를 사용해 데이터를 다시 불러오기
+# 전처리 로직을 중복 작성하지 않도록 preprocessing.py의 함수를 그대로 재사용함
 from preprocessing import (
     TARGET,
     load_heart_disease_processed_files,
@@ -102,7 +99,7 @@ from preprocessing import (
     build_preprocessor,
 )
 
-# 앞에서 만든 전처리 모듈을 사용해 학습용 데이터를 다시 준비합니다.
+# 앞에서 만든 전처리 모듈을 사용해 학습용 데이터를 다시 준비함
 raw_df = load_heart_disease_processed_files(DATA_DIR)
 clean_df = clean_dataframe(raw_df)
 
@@ -133,9 +130,8 @@ print("제외 변수:", drop_features)
 print("X_train:", X_train.shape)
 print("X_test:", X_test.shape)
 
-# ## 34. 평가 함수 작성하기
+# 평가 함수 작성하기
 # balacned accuracy, precision, recall, F1, confusion matrix 사용하여 평가지표 함수 작성하기
-
 def evaluate_model(model, X_test, y_test):
     """PDF가 요구한 주요 평가 지표와 confusion matrix 값을 계산합니다."""
     y_pred = model.predict(X_test)
@@ -156,10 +152,9 @@ def evaluate_model(model, X_test, y_test):
 
     return metrics, cm
 
-# ## 35. Confusion Matrix 저장 함수 
-
+# Confusion Matrix 저장 함수 
 def save_confusion_matrix(cm, model_name):
-    """모델별 confusion matrix 그림을 보고서용 이미지로 저장합니다."""
+    # 모델별 confusion matrix 그림을 보고서용 이미지로 저장함
     fig, ax = plt.subplots(figsize=(4, 4))
 
     display = ConfusionMatrixDisplay(
@@ -177,8 +172,7 @@ def save_confusion_matrix(cm, model_name):
 
     return output_path
 
-# ## 36. 선택된 feature name 추출 함수 
-
+# 선택된 feature name 추출 함수 
 def get_selected_feature_names(fitted_pipeline):
     """SelectFromModel이 선택한 feature 이름을 추출합니다."""
     preprocessor = fitted_pipeline.named_steps["preprocessor"]
@@ -191,8 +185,7 @@ def get_selected_feature_names(fitted_pipeline):
 
     return selected_features
 
-# ## 37. 모델 파이프라인 생성 함수 
-
+#  모델 파이프라인 생성 함수 
 def build_training_pipeline(model):
     """전처리, feature selection, 모델을 하나의 sklearn Pipeline으로 묶습니다."""
     preprocessor = build_preprocessor(
@@ -218,9 +211,8 @@ def build_training_pipeline(model):
 
     return pipeline
 
-# ## 38. 비교할 모델 3개 정의 및 학습, 5-fold cv, MLflow 기록하기
-
-# 최소 3개 모델 정의하기
+# 비교할 모델 3개 정의 및 학습, 5-fold cv, MLflow 기록하기
+# 최소 3개 모델 정의하기 -> logistic regression, svc, random forest
 candidate_models = {
     "logistic_regression": LogisticRegression(
         max_iter=1000,
@@ -249,7 +241,7 @@ for model_name, base_model in candidate_models.items():
 
     pipeline = build_training_pipeline(base_model)
 
-    # 각 모델의 일반화 성능을 보기 위해 5-fold 교차 검증을 수행합니다.
+    # 각 모델의 일반화 성능을 보기 위해 5-fold 교차 검증을 수행함
     cv_scores = cross_val_score(
         pipeline,
         X_train,
@@ -259,7 +251,7 @@ for model_name, base_model in candidate_models.items():
         n_jobs=-1
     )
 
-    # 모델별 파라미터, 지표, 산출물을 MLflow run으로 기록합니다.
+    # 모델별 파라미터, 지표, 산출물을 MLflow run으로 기록함
     with mlflow.start_run(run_name=model_name):
         pipeline.fit(X_train, y_train)
 
@@ -313,9 +305,8 @@ for model_name, base_model in candidate_models.items():
 results_df = pd.DataFrame(experiment_results)
 display(results_df)
 
-# ## 39. 모델 비교표 저장하기
-
-# 임상 맥락에서 false negative를 줄이는 것이 중요하므로 recall을 우선 기준으로 정렬합니다.
+#모델 비교표 저장하기
+# 임상 맥락에서 false negative를 줄이는 것이 중요하므로 recall을 우선 기준으로 정렬함
 results_df = results_df.sort_values(
     by=["recall", "balanced_accuracy", "f1"],
     ascending=False
@@ -328,8 +319,7 @@ display(results_df)
 
 print("Saved:", model_comparison_path)
 
-# ## 40. 현재 기준 최선 모델 확인하기
-
+# 현재 기준 최선 모델 확인하기
 best_initial_model_name = results_df.iloc[0]["model_name"]
 
 print("초기 기준 최선 모델:", best_initial_model_name)
@@ -348,9 +338,8 @@ display(
     ]
 )
 
-# ## 41. Random Forest 하이퍼파라미터 튜닝하기
-
-# 후보 모델 중 Random Forest에 대해 GridSearchCV로 하이퍼파라미터 탐색을 수행합니다.
+# Random Forest 하이퍼파라미터 튜닝하기
+# 후보 모델 중 Random Forest에 대해 GridSearchCV로 하이퍼파라미터 탐색을 수행함
 rf_pipeline = build_training_pipeline(
     RandomForestClassifier(
         class_weight="balanced",
@@ -378,10 +367,9 @@ grid_search.fit(X_train, y_train)
 print("Best params:", grid_search.best_params_)
 print("Best CV balanced accuracy:", grid_search.best_score_)
 
-# ## 42. 튜닝 모델 평가 및 MLflow 기록하기
+# 튜닝 모델 평가 및 MLflow 기록하기
 # GridSearchCV를 통해 찾은 최종 후보 모델을 테스트셋에서 평가하고 MLflow에 기록하기
-
-# 튜닝으로 선택된 최적 모델을 테스트셋에서 다시 평가합니다.
+# 튜닝으로 선택된 최적 모델을 테스트셋에서 다시 평가함
 best_tuned_model = grid_search.best_estimator_
 
 tuned_metrics, tuned_cm = evaluate_model(
@@ -397,7 +385,7 @@ print("Confusion matrix:")
 print(tuned_cm)
 print("선택 feature 수:", len(tuned_selected_features))
 
-# 튜닝된 모델도 별도 MLflow run으로 기록합니다.
+# 튜닝된 모델도 별도 MLflow run으로 기록함
 with mlflow.start_run(run_name="random_forest_tuned"):
     tuned_cm_path = save_confusion_matrix(
         tuned_cm,
@@ -436,9 +424,8 @@ with mlflow.start_run(run_name="random_forest_tuned"):
         artifact_path="model"
     )
 
-# ## 43. 최종 모델 비교표에 튜닝 모델 추가하기
-
-# 기본 모델 비교표에 튜닝 모델 결과를 추가해 최종 비교표를 만듭니다.
+# 최종 모델 비교표에 튜닝 모델 추가하기
+# 기본 모델 비교표에 튜닝 모델 결과를 추가해 최종 비교표를 만듦
 tuned_result_row = {
     "model_name": "random_forest_tuned",
     "cv_balanced_accuracy_mean": grid_search.best_score_,
@@ -467,10 +454,9 @@ display(final_results_df)
 
 print("Saved:", final_model_comparison_path)
 
-# ## 44. 최종 모델 선택하기
+# 최종 모델 선택하기
 # recall이 높고 false negative가 낮으며 balanced accuracy가 높고 f1-score가 안정적인 모델을 기준으로 최종 모델을 선택함.
-
-# 정렬 기준상 가장 위에 있는 모델명을 최종 선택 후보로 확인합니다.
+# 정렬 기준상 가장 위에 있는 모델명을 최종 선택 후보로 확인함
 final_selected_model_name = final_results_df.iloc[0]["model_name"]
 
 print("최종 선택 후보:", final_selected_model_name)
@@ -489,9 +475,8 @@ display(
     ]
 )
 
-# ## 45. 최종 모델 객체 결정하기
-
-# 현재 코드는 튜닝된 Random Forest를 최종 모델 파일로 저장합니다.
+# 최종 모델 객체 결정하기
+# 현재 코드는 튜닝된 Random Forest를 최종 모델 파일로 저장함
 final_model = best_tuned_model
 final_model_name = "random_forest_tuned"
 
@@ -501,9 +486,8 @@ joblib.dump(final_model, final_model_path)
 
 print("Final model saved:", final_model_path)
 
-# ## 46. 테스트셋 저장하기
-
-# 이후 테스트, 모니터링, 보고서 재현을 위해 train/test split을 CSV로 저장합니다.
+# 테스트셋 저장하기
+# 이후 테스트, 모니터링, 보고서 재현을 위해 train/test split을 CSV로 저장함
 test_set = X_test.copy()
 test_set[TARGET] = y_test.values
 
@@ -519,10 +503,9 @@ test_set.to_csv(test_set_path, index=False)
 print("Train split saved:", train_set_path)
 print("Test split saved:", test_set_path)
 
-# ## 47. 샘플 추론 입력 저장하기
+# 샘플 추론 입력 저장하기
 # Docker와 inference.py에서 사용할 작은 입력 파일 만들기
-
-# Docker와 inference.py 동작 확인에 사용할 작은 샘플 입력을 저장합니다.
+# Docker와 inference.py 동작 확인에 사용할 작은 샘플 입력을 저장함
 sample_input = X_test.head(5).copy()
 
 sample_input_path = DATA_DIR / "sample_input.csv"
@@ -532,9 +515,8 @@ display(sample_input)
 
 print("Sample input saved:", sample_input_path)
 
-# ## 48. 최종 모델 로드 테스트
-
-# 저장된 모델 파일이 다시 로드되고 predict/predict_proba가 동작하는지 확인합니다.
+# 최종 모델 로드 테스트
+# 저장된 모델 파일이 다시 로드되고 predict/predict_proba가 동작하는지 확인함
 loaded_model = joblib.load(final_model_path)
 
 sample_pred = loaded_model.predict(sample_input)

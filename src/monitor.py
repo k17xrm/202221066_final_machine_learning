@@ -1,3 +1,4 @@
+# 저장된 모델과 train/test split을 이용해 드리프트 감지와 성능 변화를 분석하는 스크립트
 from pathlib import Path
 import logging
 import argparse
@@ -30,6 +31,7 @@ DEFAULT_LOG_PATH = REPORTS_DIR / "monitor.log"
 
 TARGET = "target"
 
+# KS 검정을 적용할 연속형 임상 변수 목록
 CONTINUOUS_FEATURES = [
     "age",
     "trestbps",
@@ -38,9 +40,7 @@ CONTINUOUS_FEATURES = [
     "oldpeak",
 ]
 
-# Synthetic drift scenario.
-# These shifts are intentionally stronger than a tiny perturbation so that
-# the effect can be observed in KS statistics and model performance.
+# 드리프트 실험에서 각 변수에 얼마나 인위적 변화를 줄지 정의함
 SHIFT_CONFIG = {
     "chol": 120.0,
     "trestbps": 40.0,
@@ -58,12 +58,14 @@ CLINICAL_LIMITS = {
 
 
 def setup_directories() -> None:
+    # 보고서용 표, 그림, 로그 저장 폴더를 미리 생성함
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def setup_logger(log_path: Path = DEFAULT_LOG_PATH) -> None:
+    # 모니터링 실행 결과와 저장 파일 경로를 로그로 남기도록 설정함
     log_path = Path(log_path)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -76,6 +78,7 @@ def setup_logger(log_path: Path = DEFAULT_LOG_PATH) -> None:
 
 
 def get_model_version(model_path: Path) -> str:
+    # 모델 파일 이름과 수정 시각을 조합해 간단한 버전 문자열을 만듦
     model_path = Path(model_path)
 
     if not model_path.exists():
@@ -88,6 +91,7 @@ def get_model_version(model_path: Path) -> str:
 
 
 def load_model(model_path: Path = DEFAULT_MODEL_PATH):
+    # 추론에 사용하는 것과 같은 저장 모델 파이프라인을 불러옴
     model_path = Path(model_path)
 
     if not model_path.exists():
@@ -215,6 +219,7 @@ def run_ks_drift_test(
     continuous_features: list[str],
     alpha: float = 0.05,
 ) -> pd.DataFrame:
+    # 원본 분포와 드리프트 분포를 KS 검정으로 비교해 변수별 결과 표를 만듦
     rows = []
 
     for col in continuous_features:
@@ -254,12 +259,12 @@ def create_metric_timeseries(
     y_test: pd.Series,
     model_version: str,
 ) -> pd.DataFrame:
+    # 드리프트 강도를 점점 키운 배치를 만들어 시간 흐름처럼 성능 변화를 기록함
     rows = []
 
     base_time = datetime.now().replace(microsecond=0)
 
-    # Synthetic drift intensity over time.
-    # This creates a time series where drift gradually increases.
+    # 시간 순서에 따라 드리프트 강도가 점진적으로 증가하도록 설정함
     strengths = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
     for idx, strength in enumerate(strengths):
@@ -359,6 +364,7 @@ def run_monitoring(
     test_path: Path = DEFAULT_TEST_PATH,
     log_path: Path = DEFAULT_LOG_PATH,
 ) -> dict:
+    # 데이터 로드, 드리프트 생성, 성능 계산, 표와 그림 저장을 한 번에 수행함
     setup_directories()
     setup_logger(log_path)
 
@@ -469,6 +475,7 @@ def run_monitoring(
 
 
 def parse_args():
+    # 명령줄 인자로 모델 파일과 데이터 파일 경로를 바꿔 실행할 수 있게 함
     parser = argparse.ArgumentParser(
         description="Run CardioCare monitoring and drift detection."
     )
