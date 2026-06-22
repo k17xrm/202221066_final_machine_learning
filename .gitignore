@@ -1,5 +1,6 @@
-./ML_기말프로젝트_CardioCare (1).pdf
+ML_기말프로젝트_CardioCare (1).pdf
 .venv/
 __pycache__/
 .ipynb_checkpoints/
 reports/
+models/
